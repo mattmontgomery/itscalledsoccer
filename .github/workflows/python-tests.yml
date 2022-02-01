@@ -1,0 +1,37 @@
+name: Python tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "python-package/**"
+      - ".github/workflows/python-tests.yml"
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd python-package && pip install --editable .
+          if [ -f requirements.dev.txt ]; then pip install -r requirements.dev.txt; fi
+      - name: Linting
+        run: |
+          cd python-package/
+          mypy itscalledsoccer
+          isort --check itscalledsoccer
+          black --check itscalledsoccer
+      - name: Behave tests
+        run: |
+          cd python-package/tests
+          behave
